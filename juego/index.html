@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>🎯 MATA NUÑEZ</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; user-select: none; }
+body { font-family: 'Inter', sans-serif; background: #0a0e27; overflow: hidden; width: 100vw; height: 100vh; color: white; }
+
+.screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; z-index: 100; }
+.hidden { display: none !important; }
+
+#startScreen { background: linear-gradient(135deg, #1a1f3a 0%, #2d1b4e 50%, #4a1942 100%); }
+.start-content { text-align: center; padding: 40px; max-width: 600px; }
+.start-content h1 { font-family: 'Press Start 2P', cursive; font-size: 2.8rem; color: #ffd700; text-shadow: 0 0 20px #ffd700, 0 0 40px #ff8c00; margin-bottom: 20px; line-height: 1.3; }
+.subtitle { font-size: 1.2rem; color: #b8c5e0; margin-bottom: 30px; letter-spacing: 1px; }
+.instructions { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,215,0,0.3); border-radius: 20px; padding: 25px; margin-bottom: 30px; }
+.instructions p { font-size: 1rem; color: #e0e6f5; margin: 8px 0; text-align: left; padding-left: 20px; }
+.btn-start { background: linear-gradient(135deg, #ffd700, #ff8c00); color: #1a1f3a; border: none; padding: 18px 50px; font-size: 1.3rem; font-weight: 900; border-radius: 50px; cursor: pointer; letter-spacing: 2px; box-shadow: 0 8px 25px rgba(255,140,0,0.5); transition: all 0.3s ease; font-family: 'Inter', sans-serif; }
+.btn-start:hover { transform: translateY(-3px) scale(1.05); box-shadow: 0 12px 35px rgba(255,140,0,0.7); }
+.hint { margin-top: 20px; font-size: 0.85rem; color: #8b9dc3; }
+
+#gameScreen { background: linear-gradient(180deg, #87CEEB 0%, #a0d8f0 40%, #c8e6c9 100%); display: flex; flex-direction: column; }
+.hud { position: absolute; top: 20px; left: 20px; right: 20px; display: flex; justify-content: space-between; align-items: center; gap: 15px; z-index: 50; flex-wrap: wrap; pointer-events: none; }
+.hud-item { background: rgba(0,0,0,0.6); padding: 12px 22px; border-radius: 15px; border: 2px solid rgba(255,215,0,0.5); display: flex; flex-direction: column; align-items: center; min-width: 110px; }
+.hud-label { font-size: 0.7rem; color: #ffd700; font-weight: 700; letter-spacing: 2px; }
+.hud-value { font-size: 1.5rem; font-weight: 900; color: white; margin-top: 4px; }
+.sound-btn { background: rgba(0,0,0,0.6); border: 2px solid rgba(255,215,0,0.5); color: white; font-size: 1.5rem; width: 55px; height: 55px; border-radius: 50%; cursor: pointer; pointer-events: all; }
+.sound-btn:hover { background: rgba(255,215,0,0.3); }
+
+.game-area { position: relative; width: 100%; height: 100%; overflow: hidden; cursor: crosshair; }
+.clouds { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+.cloud { position: absolute; background: rgba(255,255,255,0.75); border-radius: 100px; animation: floatCloud linear infinite; }
+.cloud::before, .cloud::after { content: ''; position: absolute; background: inherit; border-radius: 50%; }
+.cloud1 { width: 120px; height: 40px; top: 15%; animation-duration: 40s; }
+.cloud1::before { width: 60px; height: 60px; top: -25px; left: 15px; }
+.cloud1::after { width: 80px; height: 80px; top: -35px; right: 15px; }
+.cloud2 { width: 90px; height: 30px; top: 30%; animation-duration: 55s; animation-delay: -15s; }
+.cloud2::before { width: 50px; height: 50px; top: -20px; left: 10px; }
+.cloud2::after { width: 60px; height: 60px; top: -25px; right: 10px; }
+.cloud3 { width: 150px; height: 45px; top: 50%; animation-duration: 70s; animation-delay: -30s; opacity: 0.6; }
+.cloud3::before { width: 70px; height: 70px; top: -30px; left: 20px; }
+.cloud3::after { width: 90px; height: 90px; top: -40px; right: 20px; }
+@keyframes floatCloud { from { left: -200px; } to { left: calc(100% + 200px); } }
+
+/* ESTILO DEL OBJETIVO */
+.duck { 
+    position: absolute; 
+    width: 120px; 
+    height: 120px; 
+    cursor: crosshair; 
+    z-index: 10; 
+    filter: drop-shadow(0 6px 10px rgba(0,0,0,0.4));
+    border-radius: 50%;
+    overflow: hidden;
+    border: 3px solid #fff;
+    background: #fff;
+    object-fit: cover;
+}
+.duck img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+}
+.duck.hit { animation: hitDuck 0.5s ease-out forwards; pointer-events: none; }
+@keyframes hitDuck {
+  0% { transform: scale(1) rotate(0); opacity: 1; }
+  50% { transform: scale(1.4) rotate(20deg); opacity: 0.8; }
+  100% { transform: scale(0) rotate(90deg); opacity: 0; }
+}
+
+.shot-effect { position: absolute; width: 100px; height: 100px; pointer-events: none; z-index: 20; display: flex; justify-content: center; align-items: center; font-size: 60px; animation: shotAnim 0.4s ease-out forwards; }
+@keyframes shotAnim { 0% { opacity: 1; transform: scale(0.5); } 100% { opacity: 0; transform: scale(1.5); } }
+
+.floating-score { position: absolute; color: #ffd700; font-size: 1.5rem; font-weight: 900; pointer-events: none; z-index: 30; text-shadow: 0 0 10px #ff8c00, 2px 2px 0 #000; animation: floatUp 1s ease-out forwards; }
+@keyframes floatUp { 0% { opacity: 1; transform: translateY(0); } 100% { opacity: 0; transform: translateY(-80px); } }
+
+.pause-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 200; gap: 30px; }
+.pause-screen h2 { font-family: 'Press Start 2P', cursive; font-size: 3rem; color: #ffd700; }
+
+#gameOverScreen { background: linear-gradient(135deg, #2d0a0a 0%, #4a1010 50%, #1a0000 100%); }
+.gameover-content { text-align: center; padding: 40px; }
+.gameover-content h2 { font-family: 'Press Start 2P', cursive; font-size: 2.5rem; color: #ff4444; text-shadow: 0 0 20px #ff4444; margin-bottom: 30px; }
+.final-score-label { font-size: 1rem; color: #b8c5e0; letter-spacing: 3px; margin-bottom: 10px; }
+.final-score { font-family: 'Press Start 2P', cursive; font-size: 4rem; color: #ffd700; text-shadow: 0 0 30px #ff8c00; margin-bottom: 20px; }
+.final-message { font-size: 1.2rem; color: #e0e6f5; margin-bottom: 30px; font-style: italic; }
+
+@keyframes levelBanner {
+  0% { opacity: 0; transform: translate(-50%,-50%) scale(0.5); }
+  20% { opacity: 1; transform: translate(-50%,-50%) scale(1.2); }
+  80% { opacity: 1; transform: translate(-50%,-50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%,-50%) scale(1.5) translateY(-50px); }
+}
+</style>
+</head>
+<body>
+
+<!-- PANTALLA INICIO -->
+<div id="startScreen" class="screen">
+  <div class="start-content">
+    <h1>🎯 MATA NUÑEZ</h1>
+    <p class="subtitle">¡Demuestra tu precisión!</p>
+    <div class="instructions">
+      <p>🎯 Haz clic en los objetivos para disparar</p>
+      <p>💥 +10 puntos por cada acierto</p>
+      <p>❤️ Tienes 3 vidas</p>
+      <p>⚡ Cada 5 aciertos subes de nivel</p>
+    </div>
+    <button id="startBtn" class="btn-start">▶ COMENZAR JUEGO</button>
+    <p class="hint">💡 Presiona <strong>ESC</strong> para pausar</p>
+  </div>
+</div>
+
+<!-- PANTALLA JUEGO -->
+<div id="gameScreen" class="screen hidden">
+  <div class="hud">
+    <div class="hud-item"><span class="hud-label">PUNTOS</span><span id="score" class="hud-value">0</span></div>
+    <div class="hud-item"><span class="hud-label">NIVEL</span><span id="level" class="hud-value">1</span></div>
+    <div class="hud-item"><span class="hud-label">VIDAS</span><span id="lives" class="hud-value">❤️❤️❤️</span></div>
+    <button id="soundBtn" class="sound-btn">🔊</button>
+  </div>
+  <div id="gameArea" class="game-area">
+    <div class="clouds">
+      <div class="cloud cloud1"></div>
+      <div class="cloud cloud2"></div>
+      <div class="cloud cloud3"></div>
+    </div>
+  </div>
+  <div id="pauseScreen" class="pause-screen hidden">
+    <h2>⏸ PAUSA</h2>
+    <button id="resumeBtn" class="btn-start">▶ CONTINUAR</button>
+  </div>
+</div>
+
+<!-- GAME OVER -->
+<div id="gameOverScreen" class="screen hidden">
+  <div class="gameover-content">
+    <h2>💥 GAME OVER 💥</h2>
+    <p class="final-score-label">PUNTUACIÓN FINAL</p>
+    <p id="finalScore" class="final-score">0</p>
+    <p id="finalMessage" class="final-message"></p>
+    <button id="restartBtn" class="btn-start">🔄 JUGAR DE NUEVO</button>
+  </div>
+</div>
+
+<!-- 🎵 REPRODUCTOR DE MÚSICA OCULTO (AUDIO DIRECTO) -->
+<audio id="bgMusic" loop>
+    <!-- Enlace directo a la música de Duck Hunt (8-bit) -->
+    <source src="https://www.myinstants.com/media/sounds/duck-hunt-theme.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+// ===== TU IMAGEN COMO OBJETIVO =====
+const TARGET_IMAGE_URL = "pato.jpeg"; 
+
+// ===== VARIABLES =====
+let score = 0, level = 1, lives = 3, ducksHit = 0;
+let isPlaying = false, isPaused = false, soundEnabled = true;
+let gameLoop = null, spawnTimer = null;
+let activeDucks = [], audioCtx = null;
+
+const CONFIG = {
+  baseSpawnInterval: 1200,
+  minSpawnInterval: 400,
+  duckSpeed: 1.8,
+  speedIncrement: 0.3,
+  ducksPerLevel: 5,
+  maxDucksOnScreen: 6
+};
+
+// DOM
+const startScreen = document.getElementById('startScreen');
+const gameScreen = document.getElementById('gameScreen');
+const gameOverScreen = document.getElementById('gameOverScreen');
+const pauseScreen = document.getElementById('pauseScreen');
+const gameArea = document.getElementById('gameArea');
+const scoreEl = document.getElementById('score');
+const levelEl = document.getElementById('level');
+const livesEl = document.getElementById('lives');
+const finalScoreEl = document.getElementById('finalScore');
+const finalMessageEl = document.getElementById('finalMessage');
+const startBtn = document.getElementById('startBtn');
+const restartBtn = document.getElementById('restartBtn');
+const resumeBtn = document.getElementById('resumeBtn');
+const soundBtn = document.getElementById('soundBtn');
+const bgMusic = document.getElementById('bgMusic'); 
+
+// AUDIO (EFECTOS DE SONIDO)
+function initAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+}
+function playShootSound() {
+  if (!soundEnabled || !audioCtx) return;
+  const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+  osc.type = 'square';
+  osc.frequency.setValueAtTime(800, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.1);
+  gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + 0.15);
+}
+function playHitSound() {
+  if (!soundEnabled || !audioCtx) return;
+  const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+  osc.type = 'sawtooth';
+  osc.frequency.setValueAtTime(400, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(100, audioCtx.currentTime + 0.2);
+  gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.25);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + 0.25);
+}
+function playEscapeSound() {
+  if (!soundEnabled || !audioCtx) return;
+  const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
+  osc.type = 'sine';
+  osc.frequency.setValueAtTime(300, audioCtx.currentTime);
+  osc.frequency.exponentialRampToValueAtTime(80, audioCtx.currentTime + 0.3);
+  gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.35);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + 0.35);
+}
+function playLevelUpSound() {
+  if (!soundEnabled || !audioCtx) return;
+  [523, 659, 784, 1047].forEach((f, i) => {
+    setTimeout(() => {
+      if (!audioCtx) return;
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = 'triangle'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime + 0.2);
+    }, i * 100);
+  });
+}
+function playGameOverSound() {
+  if (!soundEnabled || !audioCtx) return;
+  [400, 350, 300, 200].forEach((f, i) => {
+    setTimeout(() => {
+      if (!audioCtx) return;
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = 'sawtooth'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.25, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime + 0.3);
+    }, i * 200);
+  });
+}
+
+// HUD
+function updateHUD() {
+  scoreEl.textContent = score;
+  levelEl.textContent = level;
+  livesEl.textContent = '❤️'.repeat(Math.max(0, lives)) + '🖤'.repeat(Math.max(0, 3 - lives));
+}
+
+// RESET
+function resetGame() {
+  score = 0; level = 1; lives = 3; ducksHit = 0;
+  isPlaying = true; isPaused = false;
+  activeDucks.forEach(d => d.el.remove());
+  activeDucks = [];
+  updateHUD();
+}
+
+function getSpawnInterval() {
+  return Math.max(CONFIG.minSpawnInterval, CONFIG.baseSpawnInterval - (level - 1) * 100);
+}
+function getDuckSpeed() {
+  return CONFIG.duckSpeed + (level - 1) * CONFIG.speedIncrement;
+}
+
+// SPAWN
+function spawnDuck() {
+  if (!isPlaying || isPaused) return;
+  if (activeDucks.length >= CONFIG.maxDucksOnScreen) return;
+
+  const duckEl = document.createElement('div');
+  duckEl.className = 'duck';
+  
+  const img = document.createElement('img');
+  img.src = TARGET_IMAGE_URL;
+  img.alt = 'Objetivo';
+  img.onerror = function() {
+      this.src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🎯</text></svg>';
+  };
+  duckEl.appendChild(img);
+
+  const gameRect = gameArea.getBoundingClientRect();
+  const duckSize = 120;
+  const maxY = gameRect.height - duckSize - 40;
+  const startY = Math.random() * (maxY - 80) + 40;
+
+  const fromLeft = Math.random() > 0.5;
+  const startX = fromLeft ? -duckSize : gameRect.width + duckSize;
+  const speed = getDuckSpeed();
+  const vx = fromLeft ? speed : -speed;
+
+  duckEl.style.left = startX + 'px';
+  duckEl.style.top = startY + 'px';
+
+  gameArea.appendChild(duckEl);
+
+  const duckObj = { el: duckEl, x: startX, y: startY, vx: vx, hit: false };
+  activeDucks.push(duckObj);
+
+  duckEl.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (duckObj.hit || !isPlaying || isPaused) return;
+    onDuckHit(duckObj);
+  });
+}
+
+function onDuckHit(duckObj) {
+  duckObj.hit = true;
+  playShootSound();
+  setTimeout(playHitSound, 50);
+
+  createShotEffect(duckObj.x + 60, duckObj.y + 60);
+  createFloatingScore(duckObj.x + 60, duckObj.y + 40, '+10');
+
+  score += 10;
+  ducksHit++;
+  updateHUD();
+
+  duckObj.el.classList.add('hit');
+  setTimeout(() => {
+    duckObj.el.remove();
+    activeDucks = activeDucks.filter(d => d !== duckObj);
+  }, 500);
+
+  if (ducksHit > 0 && ducksHit % CONFIG.ducksPerLevel === 0) {
+    levelUp();
+  }
+}
+
+function onDuckEscape(duckObj) {
+  if (duckObj.hit) return;
+  duckObj.hit = true;
+  playEscapeSound();
+  lives--;
+  updateHUD();
+
+  createFloatingScore(
+    Math.min(Math.max(duckObj.x + 60, 40), gameArea.clientWidth - 40),
+    80, '-1 ❤️'
+  );
+
+  duckObj.el.remove();
+  activeDucks = activeDucks.filter(d => d !== duckObj);
+
+  if (lives <= 0) gameOver();
+}
+
+function levelUp() {
+  level++;
+  updateHUD();
+  playLevelUpSound();
+  showBanner('¡NIVEL ' + level + '!');
+  startSpawner();
+}
+
+function showBanner(text) {
+  const banner = document.createElement('div');
+  banner.textContent = text;
+  banner.style.cssText = `
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    font-family:'Press Start 2P',cursive;font-size:3rem;color:#ffd700;
+    text-shadow:0 0 20px #ffd700,0 0 40px #ff8c00;z-index:100;pointer-events:none;
+    animation:levelBanner 1.5s ease-out forwards;`;
+  gameArea.appendChild(banner);
+  setTimeout(() => banner.remove(), 1500);
+}
+
+function createShotEffect(x, y) {
+  const e = document.createElement('div');
+  e.className = 'shot-effect';
+  e.textContent = '💥';
+  e.style.left = (x - 50) + 'px';
+  e.style.top = (y - 50) + 'px';
+  gameArea.appendChild(e);
+  setTimeout(() => e.remove(), 400);
+}
+
+function createFloatingScore(x, y, text) {
+  const el = document.createElement('div');
+  el.className = 'floating-score';
+  el.textContent = text;
+  el.style.left = x + 'px';
+  el.style.top = y + 'px';
+  gameArea.appendChild(el);
+  setTimeout(() => el.remove(), 1000);
+}
+
+// LOOP
+function gameLoopFn() {
+  if (!isPlaying || isPaused) {
+    gameLoop = requestAnimationFrame(gameLoopFn);
+    return;
+  }
+  const gameRect = gameArea.getBoundingClientRect();
+  activeDucks.forEach(duck => {
+    if (duck.hit) return;
+    duck.x += duck.vx;
+    duck.el.style.left = duck.x + 'px';
+    if (duck.vx > 0 && duck.x > gameRect.width + 150) onDuckEscape(duck);
+    else if (duck.vx < 0 && duck.x < -200) onDuckEscape(duck);
+  });
+  gameLoop = requestAnimationFrame(gameLoopFn);
+}
+
+function startGameLoop() {
+  if (gameLoop) cancelAnimationFrame(gameLoop);
+  gameLoop = requestAnimationFrame(gameLoopFn);
+}
+
+function startSpawner() {
+  if (spawnTimer) clearInterval(spawnTimer);
+  spawnTimer = setInterval(() => {
+    if (isPlaying && !isPaused) spawnDuck();
+  }, getSpawnInterval());
+}
+
+function gameOver() {
+  isPlaying = false;
+  if (spawnTimer) clearInterval(spawnTimer);
+  if (gameLoop) cancelAnimationFrame(gameLoop);
+  activeDucks.forEach(d => d.el.remove());
+  activeDucks = [];
+
+  // 🎵 DETENER MÚSICA
+  bgMusic.pause();
+  bgMusic.currentTime = 0;
+
+  finalScoreEl.textContent = score;
+  let msg = '';
+  if (score >= 300) msg = '🏆 ¡Eres un maestro de la puntería!';
+  else if (score >= 200) msg = '🎯 ¡Excelente precisión!';
+  else if (score >= 100) msg = '👍 ¡Buen trabajo!';
+  else if (score >= 50) msg = '💪 ¡Sigue practicando!';
+  else msg = '🎯 ¡Los objetivos ganaron esta vez!';
+  finalMessageEl.textContent = msg;
+
+  playGameOverSound();
+  setTimeout(() => {
+    gameScreen.classList.add('hidden');
+    gameOverScreen.classList.remove('hidden');
+  }, 300);
+}
+
+function startGame() {
+  initAudio();
+  resetGame();
+  startScreen.classList.add('hidden');
+  gameOverScreen.classList.add('hidden');
+  gameScreen.classList.remove('hidden');
+  startGameLoop();
+  startSpawner();
+  setTimeout(spawnDuck, 500);
+
+  // 🎵 REPRODUCIR MÚSICA
+  if (soundEnabled) {
+    bgMusic.play().catch(e => console.log("El navegador bloqueó el autoplay, pero sonará al hacer clic."));
+  }
+}
+
+function pauseGame() {
+  if (!isPlaying) return;
+  isPaused = true;
+  pauseScreen.classList.remove('hidden');
+  // 🎵 PAUSAR MÚSICA
+  bgMusic.pause(); 
+}
+
+function resumeGame() {
+  isPaused = false;
+  pauseScreen.classList.add('hidden');
+  startSpawner();
+  // 🎵 REANUDAR MÚSICA
+  if (soundEnabled) {
+    bgMusic.play().catch(e => console.log(e));
+  }
+}
+
+// EVENTOS
+startBtn.addEventListener('click', startGame);
+restartBtn.addEventListener('click', startGame);
+resumeBtn.addEventListener('click', resumeGame);
+
+soundBtn.addEventListener('click', () => {
+  soundEnabled = !soundEnabled;
+  soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
+  
+  if (soundEnabled) {
+    initAudio();
+    // Si el juego está activo, reanudar música
+    if (isPlaying && !isPaused) {
+      bgMusic.play().catch(e => console.log(e));
+    }
+  } else {
+    // Silenciar música
+    bgMusic.pause();
+  }
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && isPlaying) {
+    if (isPaused) resumeGame();
+    else pauseGame();
+  }
+});
+
+gameArea.addEventListener('click', (e) => {
+  if (!isPlaying || isPaused) return;
+  playShootSound();
+  const rect = gameArea.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  createShotEffect(x, y);
+  createFloatingScore(x, y, '¡Fallo!');
+});
+
+console.log('🎯 MATA NUÑEZ listo');
+</script>
+</body>
+</html>
