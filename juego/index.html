@@ -146,11 +146,11 @@ body { font-family: 'Inter', sans-serif; background: #0a0e27; overflow: hidden; 
     <source src="https://www.myinstants.com/media/sounds/duck-hunt-theme.mp3" type="audio/mpeg">
 </audio>
 
-<!-- 🔫 SONIDOS NUEVOS (Disparo, Gemido, Game Over) -->
-<audio id="sfxShoot" src="https://www.myinstants.com/media/sounds/gunshot_1.mp3" preload="auto"></audio>
-<audio id="sfxLevelUp" src="https://www.myinstants.com/media/sounds/woman-moan-1.mp3" preload="auto"></audio>
-<audio id="sfxGameOver" src="https://www.myinstants.com/media/sounds/game-over-yeah.mp3" preload="auto"></audio>
-<audio id="sfxDefeat" src="https://www.myinstants.com/media/sounds/sad-trombone.mp3" preload="auto"></audio>
+<!-- 🔊 SONIDOS LOCALES (Guarda tus archivos en la misma carpeta) -->
+<!-- ⚠️ CAMBIA LOS NOMBRES SI TUS ARCHIVOS SE LLAMAN DIFERENTE -->
+<audio id="sfxShoot" src="disparo.mp3" preload="auto"></audio>
+<audio id="sfxLevelUp" src="gemido.mp3" preload="auto"></audio>
+<audio id="sfxGameOver" src="audio_perder.mp3" preload="auto"></audio>
 
 <!-- 🔥 FIREBASE SDK -->
 <script type="module">
@@ -222,7 +222,6 @@ const saveScoreBtn = document.getElementById('saveScoreBtn');
 const sfxShoot = document.getElementById('sfxShoot');
 const sfxLevelUp = document.getElementById('sfxLevelUp');
 const sfxGameOver = document.getElementById('sfxGameOver');
-const sfxDefeat = document.getElementById('sfxDefeat');
 
 // ===== SISTEMA DE PUNTAJES ONLINE (FIREBASE) =====
 window.addEventListener('firebaseReady', () => {
@@ -278,12 +277,11 @@ function initAudio() {
 function playShootSound() {
   if (!soundEnabled) return;
   sfxShoot.currentTime = 0;
-  sfxShoot.volume = 0.4;
-  sfxShoot.play().catch(e => console.log("Error audio disparo"));
+  sfxShoot.volume = 0.6; // Volumen al 60% para que suene fuerte
+  sfxShoot.play().catch(e => console.log("Error: El archivo disparo.mp3 no se encuentra o no es válido."));
 }
 
 function playEscapeSound() {
-  // Mantenemos el sonido generado para cuando escapa un pato (para no ser tan molesto)
   if (!soundEnabled || !audioCtx) return;
   const osc = audioCtx.createOscillator(), gain = audioCtx.createGain();
   osc.type = 'sine';
@@ -298,25 +296,15 @@ function playEscapeSound() {
 function playLevelUpSound() {
   if (!soundEnabled) return;
   sfxLevelUp.currentTime = 0;
-  sfxLevelUp.volume = 0.6;
-  sfxLevelUp.play().catch(e => console.log("Error audio subir nivel"));
+  sfxLevelUp.volume = 0.7;
+  sfxLevelUp.play().catch(e => console.log("Error: El archivo gemido.mp3 no se encuentra."));
 }
 
 function playGameOverSound() {
   if (!soundEnabled) return;
-  
-  // Reproducir la voz de Game Over
   sfxGameOver.currentTime = 0;
-  sfxGameOver.volume = 0.7;
-  sfxGameOver.play().catch(e => console.log("Error audio voz game over"));
-
-  // Reproducir el trombón triste después de 1.5 segundos
-  setTimeout(() => {
-    if (!soundEnabled) return;
-    sfxDefeat.currentTime = 0;
-    sfxDefeat.volume = 0.6;
-    sfxDefeat.play().catch(e => console.log("Error audio derrota"));
-  }, 1500);
+  sfxGameOver.volume = 1.0; // Volumen al máximo
+  sfxGameOver.play().catch(e => console.log("Error: El archivo audio_perder.mp3 no se encuentra."));
 }
 
 // ===== LÓGICA DEL JUEGO =====
@@ -395,7 +383,7 @@ function spawnDuck() {
 
 function onDuckHit(duckObj) {
   duckObj.hit = true;
-  playShootSound(); // 🔫 ¡DISPARO!
+  playShootSound(); 
 
   const points = getPointsForHit();
   const centerX = duckObj.x + (duckObj.size / 2);
@@ -440,7 +428,7 @@ function onDuckEscape(duckObj) {
 function levelUp() {
   level++;
   updateHUD();
-  playLevelUpSound(); // 🔞 ¡GEMIDO!
+  playLevelUpSound(); 
   showBanner('¡NIVEL ' + level + '!');
   startSpawner();
 }
@@ -524,7 +512,7 @@ function gameOver() {
   else msg = '🎯 ¡Los objetivos ganaron esta vez!';
   finalMessageEl.textContent = msg;
 
-  playGameOverSound(); // 💀 ¡GAME OVER + DERROTA!
+  playGameOverSound(); // 💀 ¡SONIDO PERSONALIZADO DE DERROTA!
   
   setTimeout(() => {
     gameScreen.classList.add('hidden');
@@ -597,7 +585,7 @@ document.addEventListener('keydown', (e) => {
 
 gameArea.addEventListener('click', (e) => {
   if (!isPlaying || isPaused) return;
-  playShootSound(); // 🔫 Suena el disparo también al fallar
+  playShootSound(); 
   const rect = gameArea.getBoundingClientRect();
   const x = e.clientX - rect.left;
   const y = e.clientY - rect.top;
@@ -605,7 +593,7 @@ gameArea.addEventListener('click', (e) => {
   createFloatingScore(x, y, '¡Fallo!');
 });
 
-console.log('🎯 MATA NUÑEZ con sonidos actualizados');
+console.log('🎯 MATA NUÑEZ listo');
 </script>
 </body>
 </html>
