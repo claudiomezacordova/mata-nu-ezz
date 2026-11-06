@@ -66,7 +66,34 @@ body { font-family: 'Inter', sans-serif; background: #0a0e27; overflow: hidden; 
 .pause-screen h2 { font-family: 'Press Start 2P', cursive; font-size: 3rem; color: #ffd700; }
 #gameOverScreen { background: linear-gradient(135deg, #2d0a0a 0%, #4a1010 50%, #1a0000 100%); }
 .gameover-content { text-align: center; padding: 40px; }
-.gameover-content h2 { font-family: 'Press Start 2P', cursive; font-size: 2.5rem; color: #ff4444; text-shadow: 0 0 20px #ff4444; margin-bottom: 30px; }
+.gameover-content h2 { font-family: 'Press Start 2P', cursive; font-size: 2.5rem; color: #ff4444; text-shadow: 0 0 20px #ff4444; margin-bottom: 10px; }
+
+/* TEXTO DE "LÁRGATE POBRE" */
+.insult-text {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: #ff0000;
+    text-transform: uppercase;
+    text-shadow: 0 0 10px #ff0000, 0 0 20px #ff0000, 2px 2px 0 #000;
+    margin-bottom: 30px;
+    animation: shake 0.5s infinite;
+    font-family: 'Press Start 2P', cursive;
+    line-height: 1.2;
+}
+@keyframes shake {
+  0% { transform: translate(1px, 1px) rotate(0deg); }
+  10% { transform: translate(-1px, -2px) rotate(-1deg); }
+  20% { transform: translate(-3px, 0px) rotate(1deg); }
+  30% { transform: translate(3px, 2px) rotate(0deg); }
+  40% { transform: translate(1px, -1px) rotate(1deg); }
+  50% { transform: translate(-1px, 2px) rotate(-1deg); }
+  60% { transform: translate(-3px, 1px) rotate(0deg); }
+  70% { transform: translate(3px, 1px) rotate(-1deg); }
+  80% { transform: translate(-1px, -1px) rotate(1deg); }
+  90% { transform: translate(1px, 2px) rotate(0deg); }
+  100% { transform: translate(1px, -2px) rotate(-1deg); }
+}
+
 .final-score-label { font-size: 1rem; color: #b8c5e0; letter-spacing: 3px; margin-bottom: 10px; }
 .final-score { font-family: 'Press Start 2P', cursive; font-size: 4rem; color: #ffd700; text-shadow: 0 0 30px #ff8c00; margin-bottom: 20px; }
 .final-message { font-size: 1.2rem; color: #e0e6f5; margin-bottom: 20px; font-style: italic; }
@@ -117,7 +144,9 @@ body { font-family: 'Inter', sans-serif; background: #0a0e27; overflow: hidden; 
 
         <div id="gameOverScreen" class="screen hidden">
           <div class="gameover-content">
-            <h2>💥 GAME OVER 💥</h2>
+            <!-- TEXTO QUE PEDISTE -->
+            <div class="insult-text">¡YA LÁRGATE<br>POBRE!</div>
+            
             <p class="final-score-label">PUNTUACIÓN FINAL</p>
             <p id="finalScore" class="final-score">0</p>
             <p id="finalMessage" class="final-message"></p>
@@ -146,11 +175,14 @@ body { font-family: 'Inter', sans-serif; background: #0a0e27; overflow: hidden; 
     <source src="https://www.myinstants.com/media/sounds/duck-hunt-theme.mp3" type="audio/mpeg">
 </audio>
 
-<!-- 🔊 SONIDOS LOCALES (Guarda tus archivos en la misma carpeta) -->
-<!-- ⚠️ CAMBIA LOS NOMBRES SI TUS ARCHIVOS SE LLAMAN DIFERENTE -->
-<audio id="sfxShoot" src="disparo.mp3" preload="auto"></audio>
-<audio id="sfxLevelUp" src="gemido.mp3" preload="auto"></audio>
-<audio id="sfxGameOver" src="audio_perder.mp3" preload="auto"></audio>
+<!-- 🔫 SONIDOS (Enlaces directos para que suenen sí o sí) -->
+<!-- 1. Disparo de escopeta (Mixkit - Gratis y sin Copyright) -->
+<audio id="sfxShoot" src="https://assets.mixkit.co/active_storage/sfx/234/234-preview.mp3" preload="auto"></audio>
+
+<!-- 2. Audio de derrota (Grito de hombre enojado) -->
+<audio id="sfxGameOver" src="https://www.myinstants.com/media/sounds/angry-man-yell.mp3" preload="auto"></audio>
+
+<!-- 3. Sonido de subir nivel (Mantengo el original de 8-bits para no molestar) -->
 
 <!-- 🔥 FIREBASE SDK -->
 <script type="module">
@@ -220,7 +252,6 @@ const saveScoreBtn = document.getElementById('saveScoreBtn');
 
 // Variables de sonido
 const sfxShoot = document.getElementById('sfxShoot');
-const sfxLevelUp = document.getElementById('sfxLevelUp');
 const sfxGameOver = document.getElementById('sfxGameOver');
 
 // ===== SISTEMA DE PUNTAJES ONLINE (FIREBASE) =====
@@ -277,8 +308,8 @@ function initAudio() {
 function playShootSound() {
   if (!soundEnabled) return;
   sfxShoot.currentTime = 0;
-  sfxShoot.volume = 0.6; // Volumen al 60% para que suene fuerte
-  sfxShoot.play().catch(e => console.log("Error: El archivo disparo.mp3 no se encuentra o no es válido."));
+  sfxShoot.volume = 0.8; // Volumen alto
+  sfxShoot.play().catch(e => console.log("Error reproduciendo disparo: ", e));
 }
 
 function playEscapeSound() {
@@ -294,17 +325,25 @@ function playEscapeSound() {
 }
 
 function playLevelUpSound() {
-  if (!soundEnabled) return;
-  sfxLevelUp.currentTime = 0;
-  sfxLevelUp.volume = 0.7;
-  sfxLevelUp.play().catch(e => console.log("Error: El archivo gemido.mp3 no se encuentra."));
+  if (!soundEnabled || !audioCtx) return;
+  [523, 659, 784, 1047].forEach((f, i) => {
+    setTimeout(() => {
+      if (!audioCtx) return;
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+      o.type = 'triangle'; o.frequency.value = f;
+      g.gain.setValueAtTime(0.2, audioCtx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.2);
+      o.connect(g); g.connect(audioCtx.destination);
+      o.start(); o.stop(audioCtx.currentTime + 0.2);
+    }, i * 100);
+  });
 }
 
 function playGameOverSound() {
   if (!soundEnabled) return;
   sfxGameOver.currentTime = 0;
-  sfxGameOver.volume = 1.0; // Volumen al máximo
-  sfxGameOver.play().catch(e => console.log("Error: El archivo audio_perder.mp3 no se encuentra."));
+  sfxGameOver.volume = 1.0; // Volumen al máximo para que se escuche el grito
+  sfxGameOver.play().catch(e => console.log("Error reproduciendo audio de derrota: ", e));
 }
 
 // ===== LÓGICA DEL JUEGO =====
@@ -512,7 +551,7 @@ function gameOver() {
   else msg = '🎯 ¡Los objetivos ganaron esta vez!';
   finalMessageEl.textContent = msg;
 
-  playGameOverSound(); // 💀 ¡SONIDO PERSONALIZADO DE DERROTA!
+  playGameOverSound(); // Se reproduce el audio de enojo
   
   setTimeout(() => {
     gameScreen.classList.add('hidden');
